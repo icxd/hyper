@@ -4,10 +4,13 @@ kernel_object_files := $(patsubst src/impl/kernel/%.cpp, build/kernel/%.o, $(ker
 x86_64_cpp_source_files := $(shell find src/impl/x86_64 -name *.cpp)
 x86_64_cpp_object_files := $(patsubst src/impl/x86_64/%.cpp, build/x86_64/%.o, $(x86_64_cpp_source_files))
 
+libc_source_files := $(shell find src/libc -name *.cpp)
+libc_object_files := $(patsubst src/libc/%.cpp, build/libc/%.o, $(libc_source_files))
+
 x86_64_asm_source_files := $(shell find src/impl/x86_64 -name *.asm)
 x86_64_asm_object_files := $(patsubst src/impl/x86_64/%.asm, build/x86_64/%.o, $(x86_64_asm_source_files))
 
-x86_64_object_files := $(x86_64_cpp_object_files) $(x86_64_asm_object_files)
+x86_64_object_files := $(x86_64_cpp_object_files) $(x86_64_asm_object_files) $(libc_object_files)
 
 $(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.cpp
 	mkdir -p $(dir $@) && \
@@ -16,6 +19,10 @@ $(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.cpp
 $(x86_64_cpp_object_files): build/x86_64/%.o : src/impl/x86_64/%.cpp
 	mkdir -p $(dir $@) && \
 	g++ -c -I src/intf -I src/libc -ffreestanding $(patsubst build/x86_64/%.o, src/impl/x86_64/%.cpp, $@) -o $@
+
+$(libc_object_files): build/libc/%.o : src/libc/%.cpp
+	mkdir -p $(dir $@) && \
+	g++ -c -I src/intf -ffreestanding $(patsubst build/libc/%.o, src/libc/%.cpp, $@) -o $@
 
 	
 $(x86_64_asm_object_files): build/x86_64/%.o : src/impl/x86_64/%.asm
