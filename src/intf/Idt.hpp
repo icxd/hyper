@@ -24,18 +24,56 @@ struct Idtr {
 } __attribute__((packed));
 
 struct Idt {
-    Idt();
-
+    void install();
     void setDescriptor(uint8_t vector, void *isr, uint8_t flags);
 
   private:
+    bool vectors[32];
     __attribute__((aligned(0x10))) IdtEntry idt[256];
     Idtr idtr;
 };
 
 } // namespace Hyper
 
-__attribute__((noreturn)) void exception_handler();
+constexpr const char *exception_messages[] = {
+    "Divide by zero",
+    "Debug",
+    "Non-maskable interrupt",
+    "Breakpoint",
+    "Overflow",
+    "Bound range exceeded",
+    "Invalid opcode",
+    "Device not available",
+    "Double fault",
+    "Coprocessor segment overrun",
+    "Invalid TSS",
+    "Segment not present",
+    "Stack-segment fault",
+    "General protection fault",
+    "Page fault",
+    "Reserved",
+    "x87 floating-point exception",
+    "Alignment check",
+    "Machine check",
+    "SIMD floating-point exception",
+    "Virtualization exception",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Reserved",
+    "Security exception",
+    "Reserved",
+    "Triple fault",
+};
+
+__attribute__((noreturn)) void
+exception_handler(uint64_t vector, uint64_t error_code,
+                  uint64_t instruction_pointer, uint64_t code_segment,
+                  uint64_t cpu_flags, uint64_t stack_pointer,
+                  uint64_t stack_segment);
 
 #ifdef __cplusplus
 }

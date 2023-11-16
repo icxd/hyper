@@ -1,12 +1,32 @@
 extern exception_handler
 
 %macro isr_err_stub 1
+global isr_stub_%+%1
 isr_stub_%+%1:
+    ; void exception_handler(uint64_t vector, uint64_t error_code,
+    ;                    uint64_t instruction_pointer, uint64_t code_segment,
+    ;                    uint64_t cpu_flags, uint64_t stack_pointer,
+    ;                    uint64_t stack_segment);
+    mov rdi, %1
+    mov rsi, [rsp+8]
+    mov rdx, [rsp+16]
+    mov rcx, [rsp+24]
+    mov r8, [rsp+32]
+    mov r9, [rsp+40]
+    mov rax, [rsp+48]
     call exception_handler
     iret
 %endmacro
 %macro isr_no_err_stub 1
+global isr_stub_%+%1
 isr_stub_%+%1:
+    mov rdi, %1
+    mov rsi, [rsp+8]
+    mov rdx, [rsp+16]
+    mov rcx, [rsp+24]
+    mov r8, [rsp+32]
+    mov r9, [rsp+40]
+    mov rax, [rsp+48]
     call exception_handler
     iretq
 %endmacro

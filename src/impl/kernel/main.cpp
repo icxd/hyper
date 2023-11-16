@@ -1,11 +1,19 @@
+#include <Base.hpp>
 #include <Defer.hpp>
 #include <Idt.hpp>
+#include <Isr.hpp>
 #include <Logging.hpp>
+#include <Pic.hpp>
 #include <Qemu.hpp>
 #include <Vga.hpp>
-
 #include <multiboot2.h>
+
 #include <stdint.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+Hyper::Qemu qemu;
+Hyper::Idt idt;
 
 void rainbow(Hyper::Vga vga, char *s) {
     Hyper::Vga::Color colors[] = {
@@ -23,31 +31,44 @@ void rainbow(Hyper::Vga vga, char *s) {
 }
 
 extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
-    Hyper::Qemu qemu;
+    Hyper::Isr::isrInstall(&idt);
+    // Hyper::Isr::irqInstall();
+    qemu = Hyper::Qemu();
+
+    // Hyper::Vga vga = Hyper::Vga();
+    // vga.clear();
+
+    Hyper::PIC pic = Hyper::PIC();
+    pic.remap(0x20, 0x28); // remap PIC1 to 0x20 and PIC2 to 0x28
+    pic.unmask(0);         // unmask IRQ0
+
+    // 10 / 0;
+    // syscall(SYS_write, 1, "Hello, world!\n", 14);
+
+    // Optional<int> a = Optional<int>(10);
+    // int b = a.unwrap_or(0);
+    // qemu.printf("a: %d\n", b);
+
+    // Optional<int> a = Optional<int>();
+    // a.unwrap();
 
     multiboot_tag *tag;
     uintptr_t size;
 
-    /*  Clear the screen. */
-    // cls();
-
-    /*  Am I booted by a Multiboot-compliant boot loader? */
     if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
-        qemu.printf("Invalid magic number: 0x%x\n", magic);
+        PANIC("Invalid magic number: 0x%x\n", magic);
         return;
     }
 
     if (addr & 7) {
-        qemu.printf("Unaligned mbi: 0x%x\n", addr);
+        PANIC("Unaligned mbi: 0x%x\n", addr);
         return;
     }
 
     size = addr;
     qemu.printf("Announced mbi size 0x%x\n", size);
-    for (tag = (multiboot_tag *)(addr + 8);
-         tag->type != MULTIBOOT_TAG_TYPE_END;
-         tag = (multiboot_tag *)((uint8_t *)tag +
-                                        ((tag->size + 7) & ~7))) {
+    for (tag = (multiboot_tag *)(addr + 8); tag->type != MULTIBOOT_TAG_TYPE_END;
+         tag = (multiboot_tag *)((uint8_t *)tag + ((tag->size + 7) & ~7))) {
         qemu.printf("Tag 0x%x, Size 0x%x\n", tag->type, tag->size);
         switch (tag->type) {
         case MULTIBOOT_TAG_TYPE_CMDLINE:
@@ -66,10 +87,8 @@ extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
             break;
         case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
             qemu.printf("mem_lower = %uKB, mem_upper = %uKB\n",
-                        ((multiboot_tag_basic_meminfo
-                        *)tag)->mem_lower,
-                        ((multiboot_tag_basic_meminfo
-                        *)tag)->mem_upper);
+                        ((multiboot_tag_basic_meminfo *)tag)->mem_lower,
+                        ((multiboot_tag_basic_meminfo *)tag)->mem_upper);
             break;
         case MULTIBOOT_TAG_TYPE_BOOTDEV:
             qemu.printf("Boot device 0x%x,%u,%u\n",
@@ -85,23 +104,19 @@ extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
             for (mmap = ((multiboot_tag_mmap *)tag)->entries;
                  (multiboot_uint8_t *)mmap <
                  (multiboot_uint8_t *)tag + tag->size;
-                 mmap = (multiboot_memory_map_t
-                             *)((uintptr_t)mmap +
-                                ((multiboot_tag_mmap
-                                *)tag)->entry_size))
+                 mmap = (multiboot_memory_map_t *)((uintptr_t)mmap +
+                                                   ((multiboot_tag_mmap *)tag)
+                                                       ->entry_size))
                 qemu.printf(" base_addr = 0x%x%x,"
                             " length = 0x%x%x, type = 0x%x\n",
-                            (mmap->addr >> 32),
-                            (mmap->addr & 0xffffffff),
-                            (mmap->len >> 32),
-                            (mmap->len & 0xffffffff),
+                            (mmap->addr >> 32), (mmap->addr & 0xffffffff),
+                            (mmap->len >> 32), (mmap->len & 0xffffffff),
                             mmap->type);
         } break;
         case MULTIBOOT_TAG_TYPE_FRAMEBUFFER: {
             uint32_t color;
             uintptr_t i;
-            multiboot_tag_framebuffer *tagfb =
-                (multiboot_tag_framebuffer *)tag;
+            multiboot_tag_framebuffer *tagfb = (multiboot_tag_framebuffer *)tag;
             void *fb = (void *)(uintptr_t)tagfb->common.framebuffer_addr;
 
             switch (tagfb->common.framebuffer_type) {
@@ -146,28 +161,27 @@ extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
                 switch (tagfb->common.framebuffer_bpp) {
                 case 8: {
                     uint8_t *pixel =
-                        (uint8_t *)fb + tagfb->common.framebuffer_pitch * i +
-                        i;
+                        (uint8_t *)fb + tagfb->common.framebuffer_pitch * i + i;
                     *pixel = color;
                 } break;
                 case 15:
                 case 16: {
-                    uint16_t *pixel =
-                        (uint16_t *)fb + tagfb->common.framebuffer_pitch * i
-                        + 2 * i;
+                    uint16_t *pixel = (uint16_t *)fb +
+                                      tagfb->common.framebuffer_pitch * i +
+                                      2 * i;
                     *pixel = color;
                 } break;
                 case 24: {
-                    uint32_t *pixel =
-                        (uint32_t *)fb + tagfb->common.framebuffer_pitch * i
-                        + 3 * i;
+                    uint32_t *pixel = (uint32_t *)fb +
+                                      tagfb->common.framebuffer_pitch * i +
+                                      3 * i;
                     *pixel = (color & 0xffffff) | (*pixel & 0xff000000);
                 } break;
 
                 case 32: {
-                    uint32_t *pixel =
-                        (uint32_t *)fb + tagfb->common.framebuffer_pitch * i
-                        + 4 * i;
+                    uint32_t *pixel = (uint32_t *)fb +
+                                      tagfb->common.framebuffer_pitch * i +
+                                      4 * i;
                     *pixel = color;
                 } break;
                 }
@@ -176,8 +190,7 @@ extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
         }
         }
     }
-    tag = (multiboot_tag *)((uint8_t *)tag +
-                                   ((tag->size + 7) & ~7));
+    tag = (multiboot_tag *)((uint8_t *)tag + ((tag->size + 7) & ~7));
     qemu.printf("Total mbi size 0x%x\n", tag - addr);
 }
 

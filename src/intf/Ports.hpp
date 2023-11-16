@@ -16,6 +16,8 @@ void portByteOut(uint16_t port, uint8_t data);
 void portWordOut(uint16_t port, uint16_t data);
 void portDwordOut(uint16_t port, uint32_t data);
 
+void portIoWait();
+
 } // namespace Hyper
 
 #ifdef __cplusplus

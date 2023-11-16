@@ -4,10 +4,9 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 namespace Hyper {
 
@@ -53,6 +52,4 @@ class Qemu {
 
 } // namespace Hyper
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS

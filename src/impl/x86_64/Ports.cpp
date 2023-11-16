@@ -32,4 +32,6 @@ void portDwordOut(uint16_t port, uint32_t data) {
     asm volatile("outl %0, %1" : : "a"(data), "Nd"(port));
 }
 
+void portIoWait() { portByteIn(0x80); }
+
 } // namespace Hyper
