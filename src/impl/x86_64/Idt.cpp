@@ -14,10 +14,10 @@ void Idt::install() {
     idtr.base = (uintptr_t)&idt[0];
     idtr.limit = (uint16_t)sizeof(IdtEntry) * IDT_MAX_DESCRIPTORS - 1;
 
-    for (uint8_t vector = 0; vector < 32; vector++) {
-        setDescriptor(vector, isr_stub_table[vector], 0x8e);
-        vectors[vector] = true;
-    }
+    // for (uint8_t vector = 0; vector < IDT_MAX_DESCRIPTORS; vector++) {
+    //     setDescriptor(vector, isr_stub_table[vector], 0x8e);
+    //     vectors[vector] = true;
+    // }
 
     asm volatile("lidt %0" : : "m"(idtr)); // load new idt
     asm volatile("sti");                   // set the interrupt flag
@@ -51,5 +51,5 @@ void exception_handler(uint64_t vector, uint64_t instruction_pointer,
     qemu.printf("  Stack pointer: 0x%X\n", stack_pointer);
     qemu.printf("  Stack segment: 0x%X\n", stack_segment);
 
-    __asm__ volatile("cli; hlt");
+    asm volatile("cli; hlt");
 }

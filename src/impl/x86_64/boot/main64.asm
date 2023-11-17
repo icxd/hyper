@@ -10,20 +10,20 @@ header_start:
     ; Checksum
     dd 0x100000000 - (0xE85250D6 + 0 + (header_end - header_start))
 
-align 8
-    dw 5            ; Type = Framebuffer information
-    dw 1            ; Flags = required
-    dd 20           ; Size = 20
-    dd 1280         ; Width = 1280
-    dd 720          ; Height = 720
-    dd 32           ; Depth = 32
+; align 8
+;     dw 5            ; Type = Framebuffer information
+;     dw 1            ; Flags = required
+;     dd 20           ; Size = 20
+;     dd 1280         ; Width = 1280
+;     dd 720          ; Height = 720
+;     dd 32           ; Depth = 32
 
-align 8
-    dw 4            ; Type = ELF symbols
-    dw 0            ; Flags = required
-    dd 8            ; Size = 8
-    dd 0x100000     ; Number of entries
-    dd 0x100000     ; Size of each entry
+; align 8
+;     dw 4            ; Type = ELF symbols
+;     dw 0            ; Flags = required
+;     dd 8            ; Size = 8
+;     dd 0x100000     ; Number of entries
+;     dd 0x100000     ; Size of each entry
 
 align 8
     dw 0            ; Type = End tag

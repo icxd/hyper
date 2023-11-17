@@ -31,16 +31,16 @@ void rainbow(Hyper::Vga vga, char *s) {
 }
 
 extern "C" void kmain(uintptr_t magic, uintptr_t addr) {
-    Hyper::Isr::isrInstall(&idt);
-    // Hyper::Isr::irqInstall();
     qemu = Hyper::Qemu();
+    Hyper::Isr::isrInstall(&idt);
+    Hyper::Isr::irqInstall();
 
-    // Hyper::Vga vga = Hyper::Vga();
-    // vga.clear();
+    Hyper::Vga vga = Hyper::Vga();
+    vga.clear();
 
-    Hyper::PIC pic = Hyper::PIC();
-    pic.remap(0x20, 0x28); // remap PIC1 to 0x20 and PIC2 to 0x28
-    pic.unmask(0);         // unmask IRQ0
+    // Hyper::PIC pic = Hyper::PIC();
+    // pic.remap(0x20, 0x28); // remap PIC1 to 0x20 and PIC2 to 0x28
+    // pic.unmask(0);         // unmask IRQ0
 
     // 10 / 0;
     // syscall(SYS_write, 1, "Hello, world!\n", 14);

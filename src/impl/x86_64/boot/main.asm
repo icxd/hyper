@@ -14,7 +14,7 @@ start:
     call enable_paging
 
     lgdt [gdt64.pointer]
-    jmp gdt64.code_segment:long_mode_start
+    jmp gdt64.code:long_mode_start
 
     hlt
 
@@ -126,9 +126,11 @@ stack_top:
 
 section .rodata
 gdt64:
-    dq 0 ; Zero entry
-.code_segment: equ $ - gdt64
-    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53) ; Code segment
+    dq 0
+.code: equ $ - gdt64
+    dq (1 << 44) | (1 << 47) | (1 << 41) | (1 << 43) | (1 << 53)
+.data: equ $ - gdt64
+    dq (1 << 44) | (1 << 47) | (1 << 41)
 .pointer:
-    dw $ - gdt64 - 1
+    dw .pointer - gdt64 - 1
     dq gdt64

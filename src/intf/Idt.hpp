@@ -28,7 +28,6 @@ struct Idt {
     void setDescriptor(uint8_t vector, void *isr, uint8_t flags);
 
   private:
-    bool vectors[32];
     __attribute__((aligned(0x10))) IdtEntry idt[256];
     Idtr idtr;
 };

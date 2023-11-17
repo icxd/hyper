@@ -43,12 +43,8 @@ build-x86_64: $(kernel_object_files) $(x86_64_object_files)
 	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
 
 run: build-x86_64
-# -no-shutdown -no-reboot
-	qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -serial stdio
-
-run-debug: build-x86_64
 	mkdir -p logs && \
-	qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -serial stdio -d int -no-reboot -no-shutdown -D logs/qemu.log && \
+	qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -serial stdio -M smm=off -d int -no-reboot -no-shutdown -D logs/qemu.log && \
 	objdump -d dist/x86_64/kernel.bin > logs/objdump.log
 
 debug: build-x86_64
