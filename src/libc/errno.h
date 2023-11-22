@@ -1,11 +1,19 @@
-#pragma once
+#ifndef __LIBC_ERRNO_H
+#define __LIBC_ERRNO_H
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 
-extern int *__errno_location(void);
-#define errno (*__errno_location())
+typedef int errno_t;
+
+int *_errno(void);
+#define errno (*_errno())
+
+errno_t _set_errno(int value);
+errno_t _get_errno(int *value);
+
+const char *strerror(int errnum);
 
 enum {
     EPERM = 1,             // Operation not permitted
@@ -142,3 +150,5 @@ enum {
 };
 
 __END_DECLS
+
+#endif // __LIBC_ERRNO_H
